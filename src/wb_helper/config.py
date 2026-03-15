@@ -89,7 +89,7 @@ class Settings:
             extractor_timeout_seconds=int(os.getenv("EXTRACTOR_TIMEOUT_SECONDS", "20")),
             job_timeout_seconds=int(os.getenv("JOB_TIMEOUT_SECONDS", "35")),
             bind_host=os.getenv("BIND_HOST", "0.0.0.0"),
-            bind_port=int(os.getenv("BIND_PORT", "8080")),
+            bind_port=int(os.getenv("BIND_PORT") or os.getenv("PORT", "8080")),
             telegram_user_agent=os.getenv(
                 "TELEGRAM_USER_AGENT",
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
