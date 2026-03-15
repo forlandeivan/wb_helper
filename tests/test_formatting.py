@@ -88,7 +88,7 @@ def test_build_result_keyboard() -> None:
 
     assert keyboard is not None
     assert keyboard.inline_keyboard[0][0].url == "https://ozon.ru/search/?text=99887766"
-    assert keyboard.inline_keyboard[0][0].text.startswith("Ozon ·")
+    assert keyboard.inline_keyboard[0][0].text.startswith("🔵 Ozon ·")
     assert len(keyboard.inline_keyboard) == 1
 
 

@@ -210,4 +210,4 @@ def test_build_article_cards_cleans_numbered_hash_descriptions() -> None:
 
     assert len(cards) == 1
     assert cards[0].description == "джинсы"
-    assert cards[0].buttons[0].label.startswith("WB · джинсы")
+    assert cards[0].buttons[0].label.startswith("🟣 WB · джинсы")

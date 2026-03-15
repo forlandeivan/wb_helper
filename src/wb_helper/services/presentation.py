@@ -247,7 +247,7 @@ def _pick_resolution_title(resolutions: list[ResolutionResult]) -> str | None:
 
 
 def _build_button_label(marketplace: str, description: str, article: str) -> str:
-    marketplace_label = "WB" if marketplace == "wb" else "Ozon"
+    marketplace_label = "🟣 WB" if marketplace == "wb" else "🔵 Ozon"
     cue = _truncate_label(description, 18)
     if not cue or cue == "Товар без подписи":
         cue = article
