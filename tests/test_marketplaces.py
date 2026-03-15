@@ -87,3 +87,21 @@ def test_ozon_returns_search_link() -> None:
 
     assert result.mode == "search"
     assert result.final_url == "https://www.ozon.ru/search/?text=99887766"
+
+
+def test_wb_alphanumeric_article_uses_search_only() -> None:
+    adapter = WildberriesAdapter(timeout_seconds=8, user_agent="Mozilla/5.0")
+    result = adapter.resolve(
+        ArticleCandidate(
+            raw_value="WW285677",
+            normalized_value="WW285677",
+            marketplace_hint="wb",
+            confidence="high",
+            span_start=0,
+            span_end=8,
+        )
+    )
+
+    assert result.mode == "search"
+    assert result.final_url == "https://www.wildberries.ru/catalog/0/search.aspx?search=WW285677"
+    assert result.diagnostics["reason"] == "alphanumeric_search_only"

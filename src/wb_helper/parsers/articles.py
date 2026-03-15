@@ -7,24 +7,30 @@ from wb_helper.domain import ArticleCandidate
 
 MARKETPLACE_PATTERN = r"(?:wb|вб|wildberries|ozon|озон)"
 GENERIC_LABEL_PATTERN = r"(?:арт(?:икул)?|article|sku)"
-NUMBER_PATTERN = r"(?P<article>\d{6,14})"
+NUMERIC_ARTICLE_VALUE_PATTERN = r"\d{6,14}"
+ALPHANUMERIC_ARTICLE_VALUE_PATTERN = r"[A-Za-z]{2,6}\d{4,14}"
+ARTICLE_PATTERN = rf"(?P<article>(?:{NUMERIC_ARTICLE_VALUE_PATTERN}|{ALPHANUMERIC_ARTICLE_VALUE_PATTERN}))"
 BULLET_CHARS = r"\-\*\u2022•·▪"
 LETTER_PATTERN = re.compile(r"[A-Za-zА-Яа-яЁё]", re.IGNORECASE)
 SECTION_HEADER_PATTERN = re.compile(
     rf"(?:^|[^A-Za-zА-Яа-яЁё])(?:{GENERIC_LABEL_PATTERN})(?:ы|ов)?(?:[^A-Za-zА-Яа-яЁё]|$)",
     re.IGNORECASE,
 )
-BULLET_ONLY_NUMBER_PATTERN = re.compile(
-    rf"^\s*[{BULLET_CHARS}]+\s*{NUMBER_PATTERN}\s*$",
+BULLET_ONLY_ARTICLE_PATTERN = re.compile(
+    rf"^\s*[{BULLET_CHARS}]+\s*#?\s*{ARTICLE_PATTERN}\s*$",
     re.IGNORECASE,
 )
 ITEM_TRAILING_NUMBER_PATTERN = re.compile(
     rf"^\s*(?P<bullet>[{BULLET_CHARS}]+)?\s*(?P<label>.*?{LETTER_PATTERN.pattern}.*?)"
-    rf"(?:\s+|[.:,;=#№-]\s*){NUMBER_PATTERN}\s*$",
+    rf"(?:\s+|[.:,;=#№-]\s*)#?\s*{ARTICLE_PATTERN}\s*$",
     re.IGNORECASE,
 )
-PLAIN_NUMBER_PATTERN = re.compile(
-    rf"^\s*{NUMBER_PATTERN}\s*$",
+PLAIN_ARTICLE_PATTERN = re.compile(
+    rf"^\s*#?\s*{ARTICLE_PATTERN}\s*$",
+    re.IGNORECASE,
+)
+STANDALONE_ALPHANUMERIC_ARTICLE_PATTERN = re.compile(
+    rf"(?<![A-Za-zА-Яа-яЁё0-9])#?\s*(?P<article>{ALPHANUMERIC_ARTICLE_VALUE_PATTERN})(?![A-Za-zА-Яа-яЁё0-9])",
     re.IGNORECASE,
 )
 MARKETPLACE_CONTEXT_PATTERNS = {
@@ -34,11 +40,11 @@ MARKETPLACE_CONTEXT_PATTERNS = {
 
 PATTERNS = (
     re.compile(
-        rf"(?P<marketplace>{MARKETPLACE_PATTERN})\s*(?:{GENERIC_LABEL_PATTERN})?\.?\s*[:#№-]?\s*{NUMBER_PATTERN}",
+        rf"(?P<marketplace>{MARKETPLACE_PATTERN})\s*(?:{GENERIC_LABEL_PATTERN})?\.?\s*[:#№-]?\s*#?\s*{ARTICLE_PATTERN}",
         re.IGNORECASE,
     ),
     re.compile(
-        rf"(?P<label>{GENERIC_LABEL_PATTERN})\.?\s*[:#№-]?\s*{NUMBER_PATTERN}\s*(?:[-/,]\s*)?(?P<marketplace>{MARKETPLACE_PATTERN})?",
+        rf"(?P<label>{GENERIC_LABEL_PATTERN})\.?\s*[:#№-]?\s*#?\s*{ARTICLE_PATTERN}\s*(?:[-/,]\s*)?(?P<marketplace>{MARKETPLACE_PATTERN})?",
         re.IGNORECASE,
     ),
 )
@@ -57,11 +63,12 @@ def normalize_marketplace_hint(raw_marketplace: str | None) -> str:
 
 def _build_candidate(match: re.Match[str], base_offset: int = 0) -> ArticleCandidate:
     article = match.group("article")
+    normalized_article = _normalize_article_value(article)
     marketplace_hint = normalize_marketplace_hint(match.groupdict().get("marketplace") or match.groupdict().get("label"))
     confidence = "high" if marketplace_hint in {"wb", "ozon"} else "medium"
     return ArticleCandidate(
         raw_value=article,
-        normalized_value=article,
+        normalized_value=normalized_article,
         marketplace_hint=marketplace_hint,
         confidence=confidence,
         span_start=base_offset + match.start("article"),
@@ -82,6 +89,7 @@ def parse_article_candidates(text: str) -> list[ArticleCandidate]:
             _append_candidate(candidates, seen, _apply_marketplace_hint(_build_candidate(match), document_marketplace_hint))
 
     _parse_contextual_candidates(text, candidates, seen, document_marketplace_hint)
+    _parse_standalone_alphanumeric_candidates(text, candidates, seen, document_marketplace_hint)
 
     return sorted(candidates, key=lambda item: (item.span_start, item.normalized_value))
 
@@ -136,7 +144,7 @@ def _parse_contextual_candidates(
             previous_has_letters = bool(LETTER_PATTERN.search(previous_non_empty_line))
             line_marketplace_hint = _infer_document_marketplace_hint("\n".join([previous_non_empty_line, stripped_line]))
 
-            bullet_only_match = BULLET_ONLY_NUMBER_PATTERN.match(line)
+            bullet_only_match = BULLET_ONLY_ARTICLE_PATTERN.match(line)
             if bullet_only_match and (caption_has_article_section or previous_has_letters):
                 _append_candidate(
                     candidates,
@@ -160,13 +168,13 @@ def _parse_contextual_candidates(
                         ),
                     )
                 else:
-                    plain_number_match = PLAIN_NUMBER_PATTERN.match(line)
-                    if plain_number_match and caption_has_article_section and previous_has_letters:
+                    plain_article_match = PLAIN_ARTICLE_PATTERN.match(line)
+                    if plain_article_match and caption_has_article_section and previous_has_letters:
                         _append_candidate(
                             candidates,
                             seen,
                             _apply_marketplace_hint(
-                                _build_candidate(plain_number_match, base_offset=line_offset),
+                                _build_candidate(plain_article_match, base_offset=line_offset),
                                 line_marketplace_hint or document_marketplace_hint,
                             ),
                         )
@@ -187,6 +195,20 @@ def _infer_document_marketplace_hint(text: str) -> str | None:
     return None
 
 
+def _parse_standalone_alphanumeric_candidates(
+    text: str,
+    candidates: list[ArticleCandidate],
+    seen: set[tuple[str, str]],
+    document_marketplace_hint: str | None,
+) -> None:
+    for match in STANDALONE_ALPHANUMERIC_ARTICLE_PATTERN.finditer(text):
+        _append_candidate(
+            candidates,
+            seen,
+            _apply_marketplace_hint(_build_candidate(match), document_marketplace_hint),
+        )
+
+
 def _apply_marketplace_hint(candidate: ArticleCandidate, marketplace_hint: str | None) -> ArticleCandidate:
     if candidate.marketplace_hint != "generic" or marketplace_hint is None:
         return candidate
@@ -198,3 +220,10 @@ def _apply_marketplace_hint(candidate: ArticleCandidate, marketplace_hint: str |
         span_start=candidate.span_start,
         span_end=candidate.span_end,
     )
+
+
+def _normalize_article_value(article: str) -> str:
+    normalized = article.strip()
+    if any(char.isalpha() for char in normalized):
+        return normalized.upper()
+    return normalized

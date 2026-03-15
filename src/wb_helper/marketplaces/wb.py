@@ -29,6 +29,17 @@ class WildberriesAdapter:
 
     def resolve(self, candidate: ArticleCandidate) -> ResolutionResult:
         article = candidate.normalized_value
+        if not article.isdigit():
+            return ResolutionResult(
+                marketplace=self.marketplace,
+                article=article,
+                mode="search",
+                final_url=self.build_search_url(article),
+                title=None,
+                confidence="medium" if candidate.marketplace_hint == "wb" else "low",
+                diagnostics={"reason": "alphanumeric_search_only"},
+            )
+
         exact_url = self.build_exact_url(article)
         headers = {"User-Agent": self._user_agent}
 

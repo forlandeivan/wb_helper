@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from html import escape
 
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.types import CopyTextButton, InlineKeyboardButton, InlineKeyboardMarkup
 
 from wb_helper.constants import NO_ARTICLES_MESSAGE
 from wb_helper.domain import CachedResultBundle
@@ -57,6 +57,14 @@ def build_result_keyboard(bundle: CachedResultBundle, branding: ButtonBranding |
             )
         if row:
             rows.append(row)
+        rows.append(
+            [
+                InlineKeyboardButton(
+                    text=f"Артикул · {card.article}",
+                    copy_text=CopyTextButton(text=card.article),
+                )
+            ]
+        )
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
 

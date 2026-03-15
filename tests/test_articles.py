@@ -24,6 +24,16 @@ def test_parse_generic_article_marker() -> None:
     assert candidates[0].confidence == "medium"
 
 
+def test_parse_generic_alphanumeric_article_marker() -> None:
+    text = "арт. WW285677"
+
+    candidates = parse_article_candidates(text)
+
+    assert len(candidates) == 1
+    assert candidates[0].normalized_value == "WW285677"
+    assert candidates[0].marketplace_hint == "generic"
+
+
 def test_deduplicates_same_marketplace_and_article() -> None:
     text = "WB 12345678 и wb 12345678"
 
@@ -114,4 +124,20 @@ def test_parses_numbered_hash_article_list_with_global_marketplace() -> None:
         ("wb", "789076262"),
         ("wb", "789266180"),
         ("wb", "731674372"),
+    ]
+
+
+def test_parses_standalone_alphanumeric_articles_with_global_marketplace() -> None:
+    text = (
+        "Подборка\n\n"
+        "WB\n"
+        "WW285677\n"
+        "#AB123456\n"
+    )
+
+    candidates = parse_article_candidates(text)
+
+    assert [(item.marketplace_hint, item.normalized_value) for item in candidates] == [
+        ("wb", "WW285677"),
+        ("wb", "AB123456"),
     ]

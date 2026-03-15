@@ -89,6 +89,49 @@ def test_build_result_keyboard() -> None:
     assert keyboard is not None
     assert keyboard.inline_keyboard[0][0].url == "https://ozon.ru/search/?text=99887766"
     assert keyboard.inline_keyboard[0][0].text.startswith("Ozon ·")
+    assert keyboard.inline_keyboard[1][0].copy_text.text == "99887766"
+    assert keyboard.inline_keyboard[1][0].text == "Артикул · 99887766"
+
+
+def test_build_result_keyboard_supports_alphanumeric_copy_button() -> None:
+    bundle = CachedResultBundle(
+        source_id="ABC123",
+        extraction=ExtractionResult(
+            source_url="https://www.instagram.com/reel/ABC123/",
+            source_id="ABC123",
+            caption_raw="арт. WW285677",
+            extractor="Instagram",
+            extractor_version="1.0",
+            extracted_at=datetime.now(timezone.utc),
+        ),
+        candidates=[
+            ArticleCandidate(
+                raw_value="WW285677",
+                normalized_value="WW285677",
+                marketplace_hint="wb",
+                confidence="high",
+                span_start=5,
+                span_end=13,
+            )
+        ],
+        resolutions=[
+            ResolutionResult(
+                marketplace="wb",
+                article="WW285677",
+                mode="search",
+                final_url="https://www.wildberries.ru/catalog/0/search.aspx?search=WW285677",
+                title=None,
+                confidence="medium",
+                diagnostics={},
+            )
+        ],
+    )
+
+    keyboard = build_result_keyboard(bundle)
+
+    assert keyboard is not None
+    assert keyboard.inline_keyboard[0][0].url == "https://www.wildberries.ru/catalog/0/search.aspx?search=WW285677"
+    assert keyboard.inline_keyboard[1][0].copy_text.text == "WW285677"
 
 
 def test_build_result_details_returns_none_without_caption() -> None:
