@@ -47,7 +47,7 @@ def test_build_result_message() -> None:
 
     details = build_result_details(bundle)
 
-    assert details == "• Футболка белая 12345678"
+    assert details == "• Футболка белая <code>12345678</code>"
 
 
 def test_build_result_keyboard() -> None:
@@ -89,17 +89,16 @@ def test_build_result_keyboard() -> None:
     assert keyboard is not None
     assert keyboard.inline_keyboard[0][0].url == "https://ozon.ru/search/?text=99887766"
     assert keyboard.inline_keyboard[0][0].text.startswith("Ozon ·")
-    assert keyboard.inline_keyboard[1][0].copy_text.text == "99887766"
-    assert keyboard.inline_keyboard[1][0].text == "Артикул · 99887766"
+    assert len(keyboard.inline_keyboard) == 1
 
 
-def test_build_result_keyboard_supports_alphanumeric_copy_button() -> None:
+def test_build_result_details_wraps_alphanumeric_article_only() -> None:
     bundle = CachedResultBundle(
         source_id="ABC123",
         extraction=ExtractionResult(
             source_url="https://www.instagram.com/reel/ABC123/",
             source_id="ABC123",
-            caption_raw="арт. WW285677",
+            caption_raw="Черное платье Арсеника WW285677",
             extractor="Instagram",
             extractor_version="1.0",
             extracted_at=datetime.now(timezone.utc),
@@ -110,8 +109,8 @@ def test_build_result_keyboard_supports_alphanumeric_copy_button() -> None:
                 normalized_value="WW285677",
                 marketplace_hint="wb",
                 confidence="high",
-                span_start=5,
-                span_end=13,
+                span_start=23,
+                span_end=31,
             )
         ],
         resolutions=[
@@ -127,11 +126,9 @@ def test_build_result_keyboard_supports_alphanumeric_copy_button() -> None:
         ],
     )
 
-    keyboard = build_result_keyboard(bundle)
+    details = build_result_details(bundle)
 
-    assert keyboard is not None
-    assert keyboard.inline_keyboard[0][0].url == "https://www.wildberries.ru/catalog/0/search.aspx?search=WW285677"
-    assert keyboard.inline_keyboard[1][0].copy_text.text == "WW285677"
+    assert details == "Черное платье Арсеника <code>WW285677</code>"
 
 
 def test_build_result_details_returns_none_without_caption() -> None:
