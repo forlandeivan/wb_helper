@@ -14,4 +14,8 @@ GROUP_CHAT_MESSAGE = "MVP работает только в личном чате
 PROCESSING_MESSAGE = "Разбираю reel..."
 NO_ARTICLES_MESSAGE = "В описании Reels не найдено явных артикулов WB/Ozon."
 EXTRACTION_FAILED_MESSAGE = "Не удалось извлечь описание. Проверь, что ссылка публичная."
+EXTRACTION_AUTH_REQUIRED_MESSAGE = (
+    "Instagram временно не отдает этот Reel без авторизации или уперся в rate limit. "
+    "Для таких ссылок нужно подключить cookies Instagram."
+)
 QUEUE_FAILED_MESSAGE = "Не удалось поставить задачу в очередь. Попробуй еще раз позже."

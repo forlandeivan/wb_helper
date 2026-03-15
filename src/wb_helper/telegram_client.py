@@ -19,6 +19,7 @@ async def _edit_message(
     text: str,
     bundle: CachedResultBundle,
     branding: ButtonBranding,
+    send_details: bool,
 ) -> None:
     bot = Bot(token=bot_token)
     try:
@@ -30,7 +31,7 @@ async def _edit_message(
             reply_markup=build_result_keyboard(bundle, branding),
         )
         details_text = build_result_details(bundle)
-        if details_text and details_text != text:
+        if send_details and details_text and details_text != text:
             await bot.send_message(
                 chat_id=chat_id,
                 text=details_text,
@@ -47,6 +48,8 @@ def edit_request_message(
     text: str,
     bundle: CachedResultBundle,
     branding: ButtonBranding,
+    *,
+    send_details: bool = True,
 ) -> None:
     asyncio.run(
         _edit_message(
@@ -56,6 +59,7 @@ def edit_request_message(
             text=text,
             bundle=bundle,
             branding=branding,
+            send_details=send_details,
         )
     )
 
@@ -74,6 +78,7 @@ def notify_success(
         text=build_result_message(bundle),
         bundle=bundle,
         branding=branding,
+        send_details=True,
     )
 
 
@@ -86,4 +91,5 @@ def notify_failure(bot_token: str, chat_id: int, message_id: int, text: str = EX
         text=text,
         bundle=empty_bundle,
         branding=ButtonBranding(),
+        send_details=False,
     )

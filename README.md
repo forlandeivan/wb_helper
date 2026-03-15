@@ -187,6 +187,30 @@ https://<your-domain>/telegram/webhook
    - `wb-helper-worker` берёт задачу;
    - бот возвращает кнопки и описание товаров.
 
+### Если часть Reels не извлекается
+
+Instagram периодически режет часть публичных Reels без авторизации и `yt-dlp` в этом случае отвечает чем-то вроде `rate-limit reached or login required`.
+
+Для этого в `wb-helper-web` и `wb-helper-worker` можно добавить один из вариантов:
+
+```env
+YTDLP_COOKIES_FILE=/app/instagram-cookies.txt
+```
+
+или
+
+```env
+YTDLP_COOKIES_CONTENT=<содержимое Netscape cookie file>
+```
+
+или самый простой вариант:
+
+```env
+INSTAGRAM_SESSIONID=<sessionid из авторизованного Instagram-аккаунта>
+```
+
+Практически для Railway удобнее `INSTAGRAM_SESSIONID` или `YTDLP_COOKIES_CONTENT`, потому что их можно хранить прямо в Variables.
+
 ### Если что-то не работает
 
 - `readyz` падает: обычно проблема в `POSTGRES_DSN` или `REDIS_URL`.

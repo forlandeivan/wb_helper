@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 
 from wb_helper.config import Settings
-from wb_helper.constants import EXTRACTION_FAILED_MESSAGE
+from wb_helper.constants import EXTRACTION_AUTH_REQUIRED_MESSAGE, EXTRACTION_FAILED_MESSAGE
 from wb_helper.domain import CachedResultBundle
 from wb_helper.extractors.reels import ReelExtractionError, YtDlpReelExtractor
 from wb_helper.marketplaces.ozon import OzonAdapter
@@ -23,7 +23,13 @@ def process_reel_request(request_id: str) -> None:
     engine = create_db_engine(settings.postgres_dsn)
     session_factory = create_session_factory(engine)
     repository = RequestRepository(session_factory)
-    extractor = YtDlpReelExtractor(settings.ytdlp_bin, settings.extractor_timeout_seconds)
+    extractor = YtDlpReelExtractor(
+        settings.ytdlp_bin,
+        settings.extractor_timeout_seconds,
+        cookies_file=settings.ytdlp_cookies_file,
+        cookies_content=settings.ytdlp_cookies_content,
+        instagram_sessionid=settings.instagram_sessionid,
+    )
     resolver = ResolutionService(
         wb_adapter=WildberriesAdapter(settings.request_timeout_seconds, settings.telegram_user_agent),
         ozon_adapter=OzonAdapter(),
@@ -62,7 +68,8 @@ def process_reel_request(request_id: str) -> None:
     except ReelExtractionError as exc:
         repository.mark_failed(request_id, exc.code, str(exc))
         try:
-            notify_failure(settings.bot_token, request.chat_id, request.status_message_id, EXTRACTION_FAILED_MESSAGE)
+            failure_text = EXTRACTION_AUTH_REQUIRED_MESSAGE if exc.code == "auth_required" else EXTRACTION_FAILED_MESSAGE
+            notify_failure(settings.bot_token, request.chat_id, request.status_message_id, failure_text)
         except Exception:
             logger.exception("notify_failure_failed", extra={"request_id": request_id})
         logger.warning("request_failed", extra={"request_id": request_id, "error_code": exc.code})

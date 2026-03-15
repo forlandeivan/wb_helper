@@ -61,6 +61,9 @@ class Settings:
     postgres_dsn: str
     redis_url: str
     ytdlp_bin: str
+    ytdlp_cookies_file: str | None
+    ytdlp_cookies_content: str | None
+    instagram_sessionid: str | None
     request_timeout_seconds: int
     cache_ttl_days: int
     log_level: str
@@ -90,6 +93,9 @@ class Settings:
             postgres_dsn=_read_postgres_dsn(),
             redis_url=os.getenv("REDIS_URL", "redis://localhost:6379/0"),
             ytdlp_bin=os.getenv("YTDLP_BIN", sys.executable),
+            ytdlp_cookies_file=_read_optional_env("YTDLP_COOKIES_FILE"),
+            ytdlp_cookies_content=_read_optional_env("YTDLP_COOKIES_CONTENT"),
+            instagram_sessionid=_read_optional_env("INSTAGRAM_SESSIONID"),
             request_timeout_seconds=int(os.getenv("REQUEST_TIMEOUT_SECONDS", "8")),
             cache_ttl_days=int(os.getenv("CACHE_TTL_DAYS", "30")),
             log_level=os.getenv("LOG_LEVEL", "INFO"),
