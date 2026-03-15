@@ -47,9 +47,7 @@ def test_build_result_message() -> None:
 
     details = build_result_details(bundle)
 
-    assert "<b>1. Футболка белая</b>" in details
-    assert "<code>12345678</code>" in details
-    assert "WB" in details
+    assert details == "• Футболка белая 12345678"
 
 
 def test_build_result_keyboard() -> None:
@@ -91,3 +89,14 @@ def test_build_result_keyboard() -> None:
     assert keyboard is not None
     assert keyboard.inline_keyboard[0][0].url == "https://ozon.ru/search/?text=99887766"
     assert keyboard.inline_keyboard[0][0].text.startswith("Ozon ·")
+
+
+def test_build_result_details_returns_none_without_caption() -> None:
+    bundle = CachedResultBundle(
+        source_id="ABC123",
+        extraction=None,
+        candidates=[],
+        resolutions=[],
+    )
+
+    assert build_result_details(bundle) is None
