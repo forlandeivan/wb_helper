@@ -1,0 +1,43 @@
+[build-system]
+requires = ["hatchling>=1.27.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "wb-helper"
+version = "0.1.0"
+description = "Telegram bot that extracts marketplace articles from Instagram Reels captions"
+readme = "README.md"
+requires-python = ">=3.12,<3.15"
+license = { text = "MIT" }
+authors = [
+  { name = "Codex" }
+]
+dependencies = [
+  "aiohttp>=3.11.0,<4.0.0",
+  "aiogram>=3.17.0,<4.0.0",
+  "httpx>=0.28.0,<1.0.0",
+  "psycopg[binary]>=3.2.0,<4.0.0",
+  "redis>=5.2.0,<6.0.0",
+  "rq>=1.16.2,<2.0.0",
+  "sqlalchemy>=2.0.36,<3.0.0",
+  "python-dotenv>=1.0.1,<2.0.0",
+  "yt-dlp>=2025.2.19",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3.0,<9.0.0",
+  "pytest-asyncio>=0.25.0,<1.0.0",
+]
+
+[project.scripts]
+wb-helper-web = "wb_helper.web:main"
+wb-helper-polling = "wb_helper.polling:main"
+wb-helper-worker = "wb_helper.worker:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/wb_helper"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
