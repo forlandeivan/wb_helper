@@ -22,6 +22,8 @@ def _pluralize_articles(count: int) -> str:
 def build_result_message(bundle: CachedResultBundle) -> str:
     cards = build_article_cards(bundle)
     if not cards:
+        if build_result_details(bundle):
+            return f"{NO_ARTICLES_MESSAGE}\nНиже отправлю оригинальное описание автора."
         return NO_ARTICLES_MESSAGE
 
     return (

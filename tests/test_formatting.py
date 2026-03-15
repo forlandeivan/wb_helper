@@ -100,3 +100,24 @@ def test_build_result_details_returns_none_without_caption() -> None:
     )
 
     assert build_result_details(bundle) is None
+
+
+def test_build_result_message_mentions_caption_when_no_articles_found() -> None:
+    bundle = CachedResultBundle(
+        source_id="ABC123",
+        extraction=ExtractionResult(
+            source_url="https://www.instagram.com/reel/ABC123/",
+            source_id="ABC123",
+            caption_raw="Подборка джинс в синем цвете",
+            extractor="Instagram",
+            extractor_version="1.0",
+            extracted_at=datetime.now(timezone.utc),
+        ),
+        candidates=[],
+        resolutions=[],
+    )
+
+    message = build_result_message(bundle)
+
+    assert "не найдено явных артикулов" in message
+    assert "оригинальное описание автора" in message
