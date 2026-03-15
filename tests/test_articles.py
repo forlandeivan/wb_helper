@@ -97,3 +97,21 @@ def test_does_not_force_marketplace_when_both_are_mentioned() -> None:
     assert [(item.marketplace_hint, item.normalized_value) for item in candidates] == [
         ("generic", "12345678"),
     ]
+
+
+def test_parses_numbered_hash_article_list_with_global_marketplace() -> None:
+    text = (
+        "Подборка джинс в синем цвете\n\n"
+        "WB\n"
+        "1 джинсы #789076262\n"
+        "2 джинсы #789266180\n"
+        "3 джинсы #731674372\n"
+    )
+
+    candidates = parse_article_candidates(text)
+
+    assert [(item.marketplace_hint, item.normalized_value) for item in candidates] == [
+        ("wb", "789076262"),
+        ("wb", "789266180"),
+        ("wb", "731674372"),
+    ]

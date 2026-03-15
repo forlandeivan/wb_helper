@@ -177,3 +177,37 @@ def test_build_article_cards_collapses_unique_exact_resolution() -> None:
     assert len(cards) == 1
     assert cards[0].marketplace_state == "wb"
     assert len(cards[0].buttons) == 1
+
+
+def test_build_article_cards_cleans_numbered_hash_descriptions() -> None:
+    caption = "WB\n1 джинсы #789076262"
+    bundle = _bundle(
+        caption=caption,
+        candidates=[
+            ArticleCandidate(
+                raw_value="789076262",
+                normalized_value="789076262",
+                marketplace_hint="wb",
+                confidence="high",
+                span_start=13,
+                span_end=22,
+            )
+        ],
+        resolutions=[
+            ResolutionResult(
+                marketplace="wb",
+                article="789076262",
+                mode="search",
+                final_url="https://www.wildberries.ru/catalog/0/search.aspx?search=789076262",
+                title=None,
+                confidence="medium",
+                diagnostics={},
+            )
+        ],
+    )
+
+    cards = build_article_cards(bundle)
+
+    assert len(cards) == 1
+    assert cards[0].description == "джинсы"
+    assert cards[0].buttons[0].label.startswith("WB · джинсы")

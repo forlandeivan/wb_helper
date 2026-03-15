@@ -20,7 +20,7 @@ BULLET_ONLY_NUMBER_PATTERN = re.compile(
 )
 ITEM_TRAILING_NUMBER_PATTERN = re.compile(
     rf"^\s*(?P<bullet>[{BULLET_CHARS}]+)?\s*(?P<label>.*?{LETTER_PATTERN.pattern}.*?)"
-    rf"(?:\s+|[.:,;=-]\s*){NUMBER_PATTERN}\s*$",
+    rf"(?:\s+|[.:,;=#№-]\s*){NUMBER_PATTERN}\s*$",
     re.IGNORECASE,
 )
 PLAIN_NUMBER_PATTERN = re.compile(
@@ -123,7 +123,7 @@ def _parse_contextual_candidates(
     document_marketplace_hint: str | None,
 ) -> None:
     caption_has_article_section = bool(SECTION_HEADER_PATTERN.search(text))
-    if not caption_has_article_section and "•" not in text and "-" not in text and "*" not in text:
+    if not caption_has_article_section and "•" not in text and "-" not in text and "*" not in text and "#" not in text:
         return
 
     previous_non_empty_line = ""

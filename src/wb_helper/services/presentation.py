@@ -15,6 +15,7 @@ LEADING_GENERIC_LABEL_PATTERN = re.compile(
     rf"^\s*(?:{GENERIC_LABEL_PATTERN})(?:ы|ов)?\s*[\.:,;:：#№-]*\s*",
     re.IGNORECASE,
 )
+LEADING_ENUMERATION_PATTERN = re.compile(r"^\s*\d+[\)\].:\s-]+\s*")
 METADATA_LINE_PATTERNS = (
     re.compile(rf"^\s*(?:{GENERIC_LABEL_PATTERN})(?:ы|ов)?(?:\s|$)", re.IGNORECASE),
     re.compile(r"^\s*(?:рост|вес|размер|параметры|мой рост|мой вес)\b", re.IGNORECASE),
@@ -142,8 +143,9 @@ def _normalize_description_text(text: str) -> str:
     normalized = BULLET_PREFIX_PATTERN.sub("", text)
     normalized = LEADING_MARKETPLACE_PATTERN.sub("", normalized)
     normalized = LEADING_GENERIC_LABEL_PATTERN.sub("", normalized)
+    normalized = LEADING_ENUMERATION_PATTERN.sub("", normalized)
     normalized = ARROW_SUFFIX_PATTERN.sub("", normalized)
-    normalized = normalized.strip(" .,:;|/\\-")
+    normalized = normalized.strip(" .,:;|/\\-#№")
     normalized = WHITESPACE_PATTERN.sub(" ", normalized).strip()
     return normalized
 
