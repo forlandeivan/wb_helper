@@ -38,6 +38,16 @@ def process_reel_request(request_id: str) -> None:
         wb_custom_emoji_id=settings.wb_button_custom_emoji_id,
         ozon_custom_emoji_id=settings.ozon_button_custom_emoji_id,
     )
+    logger.info(
+        "request_started",
+        extra={
+            "request_id": request_id,
+            "instagram_auth_mode": extractor.auth_mode,
+            "has_instagram_sessionid": bool(settings.instagram_sessionid),
+            "has_ytdlp_cookies_content": bool(settings.ytdlp_cookies_content),
+            "has_ytdlp_cookies_file": bool(settings.ytdlp_cookies_file),
+        },
+    )
 
     request = repository.mark_processing(request_id)
 

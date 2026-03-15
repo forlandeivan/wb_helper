@@ -99,3 +99,10 @@ def test_build_cookie_text_from_sessionid() -> None:
     assert cookie_text is not None
     assert "# Netscape HTTP Cookie File" in cookie_text
     assert "sessionid\tsession-value" in cookie_text
+
+
+def test_extractor_auth_mode() -> None:
+    assert YtDlpReelExtractor("yt-dlp", 20).auth_mode == "none"
+    assert YtDlpReelExtractor("yt-dlp", 20, instagram_sessionid="session").auth_mode == "sessionid"
+    assert YtDlpReelExtractor("yt-dlp", 20, cookies_content="cookie").auth_mode == "cookies_content"
+    assert YtDlpReelExtractor("yt-dlp", 20, cookies_file="/tmp/cookies.txt").auth_mode == "cookies_file"

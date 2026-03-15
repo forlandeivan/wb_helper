@@ -53,6 +53,7 @@ class YtDlpReelExtractor:
         self._instagram_sessionid = instagram_sessionid
 
     def extract(self, normalized_url: str, source_id: str) -> ExtractionResult:
+        auth_mode = self.auth_mode
         cookies_path = _prepare_cookies_file(
             cookies_file=self._cookies_file,
             cookies_content=self._cookies_content,
@@ -67,7 +68,15 @@ class YtDlpReelExtractor:
         if cookies_path:
             command.extend(["--cookies", cookies_path])
         command.extend(["--", normalized_url])
-        logger.info("running_extractor", extra={"source_id": source_id, "command": command[:3]})
+        logger.info(
+            "running_extractor",
+            extra={
+                "source_id": source_id,
+                "command": command[:3],
+                "uses_cookies": bool(cookies_path),
+                "auth_mode": auth_mode,
+            },
+        )
 
         try:
             completed = subprocess.run(
@@ -115,6 +124,16 @@ class YtDlpReelExtractor:
             extractor_version=get_ytdlp_version(self._ytdlp_bin),
             extracted_at=datetime.now(timezone.utc),
         )
+
+    @property
+    def auth_mode(self) -> str:
+        if self._cookies_file:
+            return "cookies_file"
+        if self._cookies_content:
+            return "cookies_content"
+        if self._instagram_sessionid:
+            return "sessionid"
+        return "none"
 
 
 def _build_ytdlp_command_prefix(ytdlp_bin: str) -> list[str]:
