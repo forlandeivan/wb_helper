@@ -36,6 +36,15 @@ def _require_env(name: str) -> str:
     return value
 
 
+def _read_postgres_dsn() -> str:
+    value = os.getenv("POSTGRES_DSN") or os.getenv("DATABASE_URL")
+    if not value:
+        raise RuntimeError("Environment variable POSTGRES_DSN or DATABASE_URL is required")
+    if value.startswith("postgresql://"):
+        return value.replace("postgresql://", "postgresql+psycopg://", 1)
+    return value
+
+
 def _read_optional_env(name: str) -> str | None:
     value = os.getenv(name)
     if value is None:
@@ -78,7 +87,7 @@ class Settings:
             bot_token=_require_env("BOT_TOKEN"),
             webhook_base_url=os.getenv("WEBHOOK_BASE_URL"),
             webhook_secret=os.getenv("WEBHOOK_SECRET"),
-            postgres_dsn=_require_env("POSTGRES_DSN"),
+            postgres_dsn=_read_postgres_dsn(),
             redis_url=os.getenv("REDIS_URL", "redis://localhost:6379/0"),
             ytdlp_bin=os.getenv("YTDLP_BIN", sys.executable),
             request_timeout_seconds=int(os.getenv("REQUEST_TIMEOUT_SECONDS", "8")),

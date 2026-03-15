@@ -111,8 +111,8 @@ pytest
 ```env
 BOT_TOKEN=твой_токен_бота
 WEBHOOK_SECRET=придумай_длинный_секрет
-POSTGRES_DSN=${{Postgres.DATABASE_URL}}
-REDIS_URL=${{Redis.REDIS_URL}}
+DATABASE_URL=<сюда DATABASE_URL из Railway Postgres>
+REDIS_URL=<сюда REDIS_URL из Railway Redis>
 YTDLP_BIN=python
 REQUEST_TIMEOUT_SECONDS=8
 CACHE_TTL_DAYS=30
@@ -133,8 +133,9 @@ WEBHOOK_BASE_URL=https://твой-public-domain.up.railway.app
 
 Примечания:
 
-- `POSTGRES_DSN` должен быть в формате SQLAlchemy/psycopg. Если Railway выдаст URL в виде `postgresql://...`, замени префикс на `postgresql+psycopg://...`.
-- `REDIS_URL` можно брать из Redis-сервиса Railway как есть.
+- `DATABASE_URL` можно копировать из Railway Postgres как есть. Приложение само приведёт `postgresql://...` к нужному драйверу.
+- Если хочешь, вместо `DATABASE_URL` можно задать `POSTGRES_DSN`, но это уже не обязательно.
+- `REDIS_URL` можно копировать из Railway Redis как есть.
 - Порт руками задавать не нужно: приложение уже умеет читать Railway-переменную `PORT`.
 
 ### Шаг 6. Открой публичный домен для web
