@@ -3,7 +3,14 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from wb_helper.domain import ArticleCandidate, CachedResultBundle, ExtractionResult, ResolutionResult
-from wb_helper.services.formatting import build_result_details, build_result_keyboard, build_result_message
+from wb_helper.services.formatting import (
+    build_marketplace_override_keyboard,
+    build_marketplace_override_message,
+    build_result_details,
+    build_result_keyboard,
+    build_result_message,
+    parse_marketplace_override_callback,
+)
 
 
 def test_build_result_message() -> None:
@@ -90,6 +97,65 @@ def test_build_result_keyboard() -> None:
     assert keyboard.inline_keyboard[0][0].url == "https://ozon.ru/search/?text=99887766"
     assert keyboard.inline_keyboard[0][0].text.startswith("🔵 Ozon ·")
     assert len(keyboard.inline_keyboard) == 1
+
+
+def test_unknown_marketplace_defaults_to_wb_with_ozon_override_button() -> None:
+    bundle = CachedResultBundle(
+        source_id="ABC123",
+        extraction=ExtractionResult(
+            source_url="https://www.instagram.com/reel/ABC123/",
+            source_id="ABC123",
+            caption_raw="Черное платье Арсеника WW285677",
+            extractor="Instagram",
+            extractor_version="1.0",
+            extracted_at=datetime.now(timezone.utc),
+        ),
+        candidates=[
+            ArticleCandidate(
+                raw_value="WW285677",
+                normalized_value="WW285677",
+                marketplace_hint="generic",
+                confidence="medium",
+                span_start=23,
+                span_end=31,
+            )
+        ],
+        resolutions=[
+            ResolutionResult(
+                marketplace="wb",
+                article="WW285677",
+                mode="search",
+                final_url="https://www.wildberries.ru/catalog/0/search.aspx?search=WW285677",
+                title=None,
+                confidence="low",
+                diagnostics={},
+            ),
+            ResolutionResult(
+                marketplace="ozon",
+                article="WW285677",
+                mode="search",
+                final_url="https://www.ozon.ru/search/?text=WW285677",
+                title=None,
+                confidence="low",
+                diagnostics={},
+            ),
+        ],
+    )
+
+    message = build_result_message(bundle)
+    keyboard = build_result_keyboard(bundle)
+    ozon_keyboard = build_marketplace_override_keyboard(bundle, "ozon")
+
+    assert "По умолчанию показал WB" in message
+    assert keyboard is not None
+    assert keyboard.inline_keyboard[0][0].text.startswith("🟣 WB ·")
+    assert keyboard.inline_keyboard[0][0].url == "https://www.wildberries.ru/catalog/0/search.aspx?search=WW285677"
+    assert keyboard.inline_keyboard[1][0].callback_data == "show_ozon:ABC123"
+    assert ozon_keyboard is not None
+    assert ozon_keyboard.inline_keyboard[0][0].text.startswith("🔵 Ozon ·")
+    assert ozon_keyboard.inline_keyboard[0][0].url == "https://www.ozon.ru/search/?text=WW285677"
+    assert build_marketplace_override_message("ozon").startswith("<b>Вариант для Ozon</b>")
+    assert parse_marketplace_override_callback("show_ozon:ABC123") == ("ozon", "ABC123")
 
 
 def test_build_result_details_wraps_alphanumeric_article_only() -> None:

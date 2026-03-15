@@ -6,7 +6,7 @@ from dataclasses import dataclass
 
 from aiogram import F, Router
 from aiogram.filters import Command
-from aiogram.types import Message
+from aiogram.types import CallbackQuery, Message
 from rq import Queue
 
 from wb_helper.constants import (
@@ -20,7 +20,14 @@ from wb_helper.constants import (
 )
 from wb_helper.domain import CachedResultBundle
 from wb_helper.queue import enqueue_request
-from wb_helper.services.formatting import build_result_details, build_result_keyboard, build_result_message
+from wb_helper.services.formatting import (
+    build_marketplace_override_keyboard,
+    build_marketplace_override_message,
+    build_result_details,
+    build_result_keyboard,
+    build_result_message,
+    parse_marketplace_override_callback,
+)
 from wb_helper.services.presentation import ButtonBranding
 from wb_helper.storage.repository import RequestRepository
 from wb_helper.url_utils import InvalidReelUrlError, extract_urls, normalize_reel_url
@@ -108,6 +115,40 @@ def build_router(runtime: BotRuntime) -> Router:
                     "Failed to enqueue request",
                 )
             await status_message.edit_text(QUEUE_FAILED_MESSAGE)
+
+    @router.callback_query(F.data)
+    async def handle_callback(callback_query: CallbackQuery) -> None:
+        parsed = parse_marketplace_override_callback(callback_query.data)
+        if parsed is None:
+            await callback_query.answer()
+            return
+
+        marketplace, source_id = parsed
+        bundle = await asyncio.to_thread(
+            runtime.repository.find_cached_result,
+            "instagram",
+            source_id,
+            runtime.cache_ttl_days,
+        )
+        if bundle is None:
+            await callback_query.answer("Не нашел сохраненный результат", show_alert=False)
+            return
+
+        keyboard = build_marketplace_override_keyboard(bundle, marketplace, runtime.button_branding)
+        if keyboard is None:
+            await callback_query.answer("Для этого результата нет ссылок", show_alert=False)
+            return
+
+        if callback_query.message is None:
+            await callback_query.answer()
+            return
+
+        await callback_query.answer()
+        await callback_query.message.answer(
+            build_marketplace_override_message(marketplace),
+            parse_mode="HTML",
+            reply_markup=keyboard,
+        )
 
     return router
 
